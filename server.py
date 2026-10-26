@@ -1,28 +1,33 @@
 import json
 import functools
 from datetime import datetime
+from pathlib import Path
 from flask import Flask,render_template,request,redirect,flash,url_for,session
+
+BASE_DIR = Path(__file__).resolve().parent
+CLUBS_FILE = BASE_DIR / 'clubs.json'
+COMPETITIONS_FILE = BASE_DIR / 'competitions.json'
 
 
 def loadClubs():
-    with open('clubs.json') as c:
+    with open(CLUBS_FILE, encoding='utf-8') as c:
          listOfClubs = json.load(c)['clubs']
          return listOfClubs
 
 
 def loadCompetitions():
-    with open('competitions.json') as comps:
+    with open(COMPETITIONS_FILE, encoding='utf-8') as comps:
          listOfCompetitions = json.load(comps)['competitions']
          return listOfCompetitions
 
 
 def saveClubs():
-    with open('clubs.json', 'w', encoding='utf-8') as c:
+    with open(CLUBS_FILE, 'w', encoding='utf-8') as c:
         json.dump({'clubs': clubs}, c, indent=4, ensure_ascii=False)
 
 
 def saveCompetitions():
-    with open('competitions.json', 'w', encoding='utf-8') as comps:
+    with open(COMPETITIONS_FILE, 'w', encoding='utf-8') as comps:
         json.dump({'competitions': competitions}, comps, indent=4, ensure_ascii=False)
 
 
