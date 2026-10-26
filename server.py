@@ -52,15 +52,21 @@ def loginRequired(view):
 def index():
     return render_template('index.html')
 
-@app.route('/showSummary',methods=['POST'])
+@app.route('/showSummary',methods=['GET','POST'])
 def showSummary():
-    email = request.form.get('email', '')
-    club = next((c for c in clubs if c['email'] == email), None)
+    if request.method == 'POST':
+        email = request.form.get('email', '')
+        club = next((c for c in clubs if c['email'] == email), None)
+        if club is None:
+            flash("Sorry, we couldn't find an account for that email address.")
+            return redirect(url_for('index'))
+        session.clear()
+        session['club'] = club['name']
+        return redirect(url_for('showSummary'))
+    club = currentClub()
     if club is None:
-        flash("Sorry, we couldn't find an account for that email address.")
+        flash("Please log in to access this page.")
         return redirect(url_for('index'))
-    session.clear()
-    session['club'] = club['name']
     return render_template('welcome.html',club=club,competitions=competitions)
 
 
@@ -125,7 +131,7 @@ def purchasePlaces():
     saveClubs()
     saveCompetitions()
     flash('Great-booking complete!')
-    return render_template('welcome.html', club=club, competitions=competitions)
+    return redirect(url_for('showSummary'))
 
 
 # TODO: Add route for points display
