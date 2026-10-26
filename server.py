@@ -1,5 +1,6 @@
 import json
 import functools
+from datetime import datetime
 from flask import Flask,render_template,request,redirect,flash,url_for,session
 
 
@@ -39,6 +40,14 @@ def currentClub():
     return next((c for c in clubs if c['name'] == clubName), None)
 
 
+def competitionIsPast(competition):
+    try:
+        date = datetime.strptime(competition['date'], '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        return False
+    return date < datetime.now()
+
+
 def loginRequired(view):
     @functools.wraps(view)
     def wrapped(*args, **kwargs):
@@ -67,7 +76,9 @@ def showSummary():
     if club is None:
         flash("Please log in to access this page.")
         return redirect(url_for('index'))
-    return render_template('welcome.html',club=club,competitions=competitions)
+    pastCompetitions = [c['name'] for c in competitions if competitionIsPast(c)]
+    return render_template('welcome.html',club=club,competitions=competitions,
+                           pastCompetitions=pastCompetitions)
 
 
 @app.route('/book/<competition>/<club>')
@@ -84,6 +95,9 @@ def book(competition,club):
     if foundCompetition is None:
         flash("This competition could not be found-please try again.")
         return redirect(url_for('index'))
+    if competitionIsPast(foundCompetition):
+        flash("Sorry, this competition is already over.")
+        return redirect(url_for('showSummary'))
     return render_template('booking.html',club=foundClub,competition=foundCompetition)
 
 
@@ -100,6 +114,9 @@ def purchasePlaces():
     if club['name'] != session.get('club'):
         flash("Sorry, you can only book places for your own club.")
         return redirect(url_for('index'))
+    if competitionIsPast(competition):
+        flash("Sorry, this competition is already over.")
+        return redirect(url_for('showSummary'))
     try:
         placesRequired = int(request.form.get('places', ''))
     except ValueError:
