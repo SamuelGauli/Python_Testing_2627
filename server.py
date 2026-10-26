@@ -1,5 +1,6 @@
 import json
-from flask import Flask,render_template,request,redirect,flash,url_for
+import functools
+from flask import Flask,render_template,request,redirect,flash,url_for,session
 
 
 def loadClubs():
@@ -30,6 +31,23 @@ app.secret_key = 'something_special'
 competitions = loadCompetitions()
 clubs = loadClubs()
 
+
+def currentClub():
+    clubName = session.get('club')
+    if clubName is None:
+        return None
+    return next((c for c in clubs if c['name'] == clubName), None)
+
+
+def loginRequired(view):
+    @functools.wraps(view)
+    def wrapped(*args, **kwargs):
+        if currentClub() is None:
+            flash("Please log in to access this page.")
+            return redirect(url_for('index'))
+        return view(*args, **kwargs)
+    return wrapped
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -41,15 +59,21 @@ def showSummary():
     if club is None:
         flash("Sorry, we couldn't find an account for that email address.")
         return redirect(url_for('index'))
+    session.clear()
+    session['club'] = club['name']
     return render_template('welcome.html',club=club,competitions=competitions)
 
 
 @app.route('/book/<competition>/<club>')
+@loginRequired
 def book(competition,club):
     foundClub = next((c for c in clubs if c['name'] == club), None)
     foundCompetition = next((c for c in competitions if c['name'] == competition), None)
     if foundClub is None:
         flash("This club could not be found-please log in again.")
+        return redirect(url_for('index'))
+    if foundClub['name'] != session.get('club'):
+        flash("Sorry, you can only book places for your own club.")
         return redirect(url_for('index'))
     if foundCompetition is None:
         flash("This competition could not be found-please try again.")
@@ -58,6 +82,7 @@ def book(competition,club):
 
 
 @app.route('/purchasePlaces',methods=['POST'])
+@loginRequired
 def purchasePlaces():
     competitionName = request.form.get('competition', '')
     clubName = request.form.get('club', '')
@@ -65,6 +90,9 @@ def purchasePlaces():
     club = next((c for c in clubs if c['name'] == clubName), None)
     if competition is None or club is None:
         flash("Sorry, this booking request is not valid-please start again.")
+        return redirect(url_for('index'))
+    if club['name'] != session.get('club'):
+        flash("Sorry, you can only book places for your own club.")
         return redirect(url_for('index'))
     try:
         placesRequired = int(request.form.get('places', ''))
@@ -105,6 +133,8 @@ def purchasePlaces():
 
 @app.route('/logout')
 def logout():
+    session.clear()
+    flash("You have been logged out.")
     return redirect(url_for('index'))
 
 if __name__ == "__main__":
