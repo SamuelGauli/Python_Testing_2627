@@ -61,7 +61,22 @@ def purchasePlaces():
     except ValueError:
         flash("Please enter a valid number of places.")
         return redirect(url_for('book', competition=competitionName, club=clubName))
-    competition['numberOfPlaces'] = int(competition['numberOfPlaces'])-placesRequired
+
+    availablePlaces = int(competition['numberOfPlaces'])
+    if placesRequired < 1:
+        flash("You must book at least one place.")
+        return redirect(url_for('book', competition=competitionName, club=clubName))
+    if placesRequired > 12:
+        flash("You cannot book more than 12 places per competition.")
+        return redirect(url_for('book', competition=competitionName, club=clubName))
+    if placesRequired > availablePlaces:
+        if availablePlaces <= 0:
+            flash("Sorry, this competition is full.")
+        else:
+            flash("Sorry, only %d places are left in this competition." % availablePlaces)
+        return redirect(url_for('book', competition=competitionName, club=clubName))
+
+    competition['numberOfPlaces'] = availablePlaces-placesRequired
     flash('Great-booking complete!')
     return render_template('welcome.html', club=club, competitions=competitions)
 
