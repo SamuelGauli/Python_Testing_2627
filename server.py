@@ -76,7 +76,14 @@ def purchasePlaces():
             flash("Sorry, only %d places are left in this competition." % availablePlaces)
         return redirect(url_for('book', competition=competitionName, club=clubName))
 
+    availablePoints = int(club['points'])
+    if placesRequired > availablePoints:
+        flash("Sorry, you only have %d points and cannot book %d places."
+              % (availablePoints, placesRequired))
+        return redirect(url_for('book', competition=competitionName, club=clubName))
+
     competition['numberOfPlaces'] = availablePlaces-placesRequired
+    club['points'] = availablePoints-placesRequired
     flash('Great-booking complete!')
     return render_template('welcome.html', club=club, competitions=competitions)
 
