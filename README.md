@@ -147,11 +147,12 @@ Merci !
       pytest tests/
       ```
 
-      Note: the `tests/` folder only contains a `.gitkeep` at the moment - every
-      fix listed in the Git workflow below was verified by running the server
-      (see *Manual checks*). `pytest tests/` therefore reports *no tests ran*
-      (exit code 5) until automated tests are added there. The specifications
-      require at least 60% of coverage before the QA branch is reviewed.
+      Note: the automated suite now lives in `tests/` and is split into
+      `tests/unit/`, `tests/integration/` and `tests/functional/`
+      (68 tests in total, roughly twice as many unit tests as the other
+      two folders combined, as the specifications ask). The specifications
+      require at least 60% of coverage before a review - the current
+      figure is 99% (see `docs/rapport-de-tests.md`).
 
     * Coverage (specification target: at least 60% of the code covered):
 
