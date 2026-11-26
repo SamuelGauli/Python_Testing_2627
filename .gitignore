@@ -6,3 +6,6 @@ lib
 __pycache__
 venv/
 .DS_Store
+.coverage
+coverage.xml
+htmlcov/
